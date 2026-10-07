@@ -8,8 +8,11 @@
  * Response (JSON):        { "text": "<analysis>" }  or  { "error": "<message>" }
  */
 
-const MODEL = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
-const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
+// Models are tried in order until one works for your key. Set GEMINI_MODEL on Vercel to force one.
+const MODELS = (process.env.GEMINI_MODEL ? [process.env.GEMINI_MODEL] : [])
+  .concat(['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash'])
+  .filter((m, i, a) => a.indexOf(m) === i);
+const endpoint = model => `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 const MAX_CONTEXT_CHARS = 6000;   // the app sends ~1,500 characters; anything far larger is not from the app
 
 // The instructions live on the server, so the endpoint cannot be used as a general-purpose chatbot.
@@ -41,30 +44,40 @@ module.exports = async (req, res) => {
   if (!context) return res.status(400).json({ error: 'Missing context' });
   if (context.length > MAX_CONTEXT_CHARS) return res.status(413).json({ error: 'Context too long' });
 
-  try {
-    const r = await fetch(ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: INSTRUCTIONS[lang] }] },
-        contents: [{ role: 'user', parts: [{ text: 'Simulation results:\n' + context }] }],
-        generationConfig: { temperature: 0.4, maxOutputTokens: 1500 },
-      }),
-      signal: AbortSignal.timeout(25000),
-    });
+  const payload = JSON.stringify({
+    systemInstruction: { parts: [{ text: INSTRUCTIONS[lang] }] },
+    contents: [{ role: 'user', parts: [{ text: 'Simulation results:\n' + context }] }],
+    generationConfig: { temperature: 0.4, maxOutputTokens: 2048 },
+  });
 
-    const data = await r.json().catch(() => ({}));
-    if (!r.ok) {
-      const status = r.status === 429 ? 429 : 502;
-      console.error('Gemini error', r.status, data?.error?.message);
-      return res.status(status).json({ error: status === 429 ? 'Rate limited' : 'AI service error' });
+  let lastError = 'AI service error';
+  for (const model of MODELS) {
+    try {
+      const r = await fetch(endpoint(model), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+        body: payload,
+        signal: AbortSignal.timeout(25000),
+      });
+      const data = await r.json().catch(() => ({}));
+
+      if (r.ok) {
+        const text = (data.candidates?.[0]?.content?.parts || []).filter(p => !p.thought).map(p => p.text || '').join('').trim();
+        if (text) return res.status(200).json({ text, model });
+        lastError = `${model}: empty response (${data.candidates?.[0]?.finishReason || 'no candidates'})`;
+        continue;
+      }
+
+      const msg = data?.error?.message || r.statusText;
+      console.error(`Gemini error ${r.status} [${model}]: ${msg}`);
+      if (r.status === 429) return res.status(429).json({ error: `Rate limited (${model}): ${msg}` });
+      lastError = `Gemini ${r.status} (${model}): ${msg}`;
+      // 404 = model not available for this key → try the next model. Anything else (bad key, API disabled) → stop.
+      if (r.status !== 404) break;
+    } catch (e) {
+      console.error(`analyze failed [${model}]`, e);
+      lastError = `${model}: ${e.name === 'TimeoutError' ? 'request timed out' : e.message}`;
     }
-
-    const text = (data.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('').trim();
-    if (!text) return res.status(502).json({ error: 'Empty response' });
-    return res.status(200).json({ text });
-  } catch (e) {
-    console.error('analyze failed', e);
-    return res.status(504).json({ error: 'AI request timed out' });
   }
+  return res.status(502).json({ error: lastError });
 };

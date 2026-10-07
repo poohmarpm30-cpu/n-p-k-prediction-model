@@ -1,0 +1,13 @@
+{
+  "name": "npk-soil-balance",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Rice field N-P-K soil balance model with Gemini AI analysis",
+  "scripts": {
+    "dev": "vercel dev",
+    "example": "node example.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

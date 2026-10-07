@@ -72,8 +72,9 @@ module.exports = async (req, res) => {
       console.error(`Gemini error ${r.status} [${model}]: ${msg}`);
       if (r.status === 429) return res.status(429).json({ error: `Rate limited (${model}): ${msg}` });
       lastError = `Gemini ${r.status} (${model}): ${msg}`;
-      // 404 = model not available for this key → try the next model. Anything else (bad key, API disabled) → stop.
-      if (r.status !== 404) break;
+      // 404 = model not available for this key; 500/503 = model overloaded → try the next model.
+      // Anything else (bad key, API disabled) → stop, another model will not help.
+      if (![404, 500, 503].includes(r.status)) break;
     } catch (e) {
       console.error(`analyze failed [${model}]`, e);
       lastError = `${model}: ${e.name === 'TimeoutError' ? 'request timed out' : e.message}`;

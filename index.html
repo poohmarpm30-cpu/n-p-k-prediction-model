@@ -18,9 +18,27 @@
     <button class="chip" id="langZh" onclick="setLang('zh')">中文</button>
   </div>
   <h1 data-i18n="heroTitle"></h1>
-  <p data-i18n="heroSub"></p>
+  <button type="button" class="projChip" id="projChip" hidden onclick="goStep(0)"></button>
 </div>
 
+<nav class="stepper" id="stepper" aria-label="steps"></nav>
+
+<section class="step" id="step-project" data-step="0" hidden>
+  <div class="stepHead"><div class="stepNo" data-w="stepOf"></div><h2 data-w="t_project"></h2><p data-w="d_project"></p></div>
+<div class="card">
+  <div class="grid">
+    <div class="full"><label for="projName"><span data-w="lblName"></span> <span class="req">*</span></label>
+      <input id="projName" maxlength="80" autocomplete="off" required aria-describedby="projErr"><div class="err" id="projErr" hidden data-w="errName"></div></div>
+    <div><label for="projOwner"><span data-w="lblOwner"></span> <span class="opt" data-w="optional"></span></label><input id="projOwner" maxlength="80" autocomplete="off"></div>
+    <div><label for="projPlace"><span data-w="lblPlace"></span> <span class="opt" data-w="optional"></span></label><input id="projPlace" maxlength="80" autocomplete="off"></div>
+    <div><label for="projVariety"><span data-w="lblVariety"></span> <span class="opt" data-w="optional"></span></label><input id="projVariety" maxlength="60" autocomplete="off"></div>
+    <div><label for="projDate"><span data-w="lblDate"></span></label><input id="projDate" type="date"></div>
+    <div class="full"><label for="projNote"><span data-w="lblNote"></span> <span class="opt" data-w="optional"></span></label><textarea id="projNote" rows="2" maxlength="300"></textarea></div>
+  </div>
+</div>
+</section>
+<section class="step" id="step-field" data-step="1" hidden>
+  <div class="stepHead"><div class="stepNo" data-w="stepOf"></div><h2 data-w="t_field"></h2><p data-w="d_field"></p></div>
 <div class="card">
   <h3 data-i18n="cardField"></h3>
   <label data-i18n="lblUnit"></label>
@@ -40,7 +58,9 @@
     <div><label for="ppmF" data-i18n="lblPpmF"></label><input id="ppmF" type="number" step="0.05" value="2.25"><div class="hint" data-i18n="hintPpmF"></div></div>
   </div>
 </div>
-
+</section>
+<section class="step" id="step-fert" data-step="2" hidden>
+  <div class="stepHead"><div class="stepNo" data-w="stepOf"></div><h2 data-w="t_fert"></h2><p data-w="d_fert"></p></div>
 <div class="card">
   <h3 data-i18n="cardFert"></h3>
   <div class="hint" style="margin:-4px 0 8px" data-i18n="presetHint"></div>
@@ -54,17 +74,21 @@
   <button type="button" class="addBtn" onclick="addFertRow(0,'46-0-0',0)" data-i18n="addFertBtn"></button>
   <div id="warn" class="warnBox" hidden></div>
 </div>
-
+</section>
+<section class="step" id="step-params" data-step="3" hidden>
+  <div class="stepHead"><div class="stepNo" data-w="stepOf"></div><h2 data-w="t_params"></h2><p data-w="d_params"></p></div>
+<div class="note" data-w="paramsNote"></div>
 <div class="nutTabs" role="group">
   <button class="nut-btn" id="nutBtnN" aria-pressed="true" onclick="setNutrient('N')">N</button>
   <button class="nut-btn" id="nutBtnP" aria-pressed="false" onclick="setNutrient('P')">P</button>
   <button class="nut-btn" id="nutBtnK" aria-pressed="false" onclick="setNutrient('K')">K</button>
 </div>
 <div id="nutrientPanels"></div>
-
-<button class="mainBtn" onclick="calc()" data-i18n="calcBtn"></button>
-
-<div class="card" id="resultCard" hidden style="margin-top:16px">
+</section>
+<section class="step" id="step-results" data-step="4" hidden>
+  <div class="stepHead"><div class="stepNo" data-w="stepOf"></div><h2 data-w="t_results"></h2><p data-w="d_results"></p></div>
+<div class="projBanner" id="projBanner"></div>
+<div class="card" id="resultCard" hidden>
   <h3 data-i18n="resTitle"></h3>
   <div class="summary" id="summary"></div>
   <div class="yieldBox">
@@ -73,8 +97,6 @@
   </div>
   <h4 data-i18n="recTitle"></h4>
   <div id="recBox" class="recList"></div>
-  <button type="button" id="aiBtn" class="aiBtn" onclick="runAIAnalysis()" data-i18n="aiBtn"></button>
-  <div id="aiBox" class="aiBox" hidden></div>
 </div>
 
 <div class="card" id="detailCard" hidden>
@@ -115,7 +137,30 @@
   <div class="tbl-wrap"><table id="tbl"></table></div>
   <details class="src"><summary data-i18n="srcTitle"></summary><div id="srcBody"></div></details>
 </div>
+</section>
+<section class="step" id="step-ai" data-step="5" hidden>
+  <div class="stepHead"><div class="stepNo" data-w="stepOf"></div><h2 data-w="t_ai"></h2><p data-w="d_ai"></p></div>
+<div class="card aiIntro">
+  <p data-w="aiIntro"></p>
+  <button type="button" id="aiBtn" class="aiBtn" onclick="runAIDashboard()"></button>
+</div>
+<div class="card aiDash" id="aiDash" hidden>
+  <div class="dashHeader"><div><h3 id="dashTitle" style="border:none;padding:0;margin:0"></h3><div class="hint" id="dashSub"></div></div>
+    <button type="button" id="dashRegen" class="preset" onclick="runAIDashboard(true)"></button></div>
+  <div id="dashStale" class="verdict v-mid" hidden style="margin-bottom:10px"></div>
+  <div id="dashBody"></div>
+</div>
+</section>
+
+<div class="navbar">
+  <button type="button" class="navBtn back" id="navBack" onclick="goStep(cur-1)"></button>
+  <div class="liveMini" id="liveMini"></div>
+  <button type="button" class="navBtn next" id="navNext" onclick="goStep(cur+1)"></button>
+</div>
+
 <script src="engine.js"></script>
 <script src="app.js"></script>
+<script src="dashboard.js"></script>
+<script src="wizard.js"></script>
 </body>
 </html>

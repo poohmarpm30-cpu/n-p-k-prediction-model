@@ -32,8 +32,8 @@
     <div><label for="projOwner"><span data-w="lblOwner"></span> <span class="opt" data-w="optional"></span></label><input id="projOwner" maxlength="80" autocomplete="off"></div>
     <div><label for="projPlace"><span data-w="lblPlace"></span> <span class="opt" data-w="optional"></span></label><input id="projPlace" maxlength="80" autocomplete="off"></div>
     <div><label for="projVariety"><span data-w="lblVariety"></span> <span class="opt" data-w="optional"></span></label><input id="projVariety" maxlength="60" autocomplete="off"></div>
-    <div><label for="projDate"><span data-w="lblDate"></span></label><input id="projDate" type="date"></div>
-    <div class="full"><label for="projNote"><span data-w="lblNote"></span> <span class="opt" data-w="optional"></span></label><textarea id="projNote" rows="2" maxlength="300"></textarea></div>
+    <div><label for="projDate"><span data-w="lblDate"></span></label><input id="projDate" type="date" autocomplete="off"></div>
+    <div class="full"><label for="projNote"><span data-w="lblNote"></span> <span class="opt" data-w="optional"></span></label><textarea id="projNote" rows="2" maxlength="300" autocomplete="off"></textarea></div>
   </div>
 </div>
 </section>
@@ -140,15 +140,15 @@
 </section>
 <section class="step" id="step-ai" data-step="5" hidden>
   <div class="stepHead"><div class="stepNo" data-w="stepOf"></div><h2 data-w="t_ai"></h2><p data-w="d_ai"></p></div>
-<div class="card aiIntro">
-  <p data-w="aiIntro"></p>
-  <button type="button" id="aiBtn" class="aiBtn" onclick="runAIDashboard()"></button>
-</div>
-<div class="card aiDash" id="aiDash" hidden>
-  <div class="dashHeader"><div><h3 id="dashTitle" style="border:none;padding:0;margin:0"></h3><div class="hint" id="dashSub"></div></div>
-    <button type="button" id="dashRegen" class="preset" onclick="runAIDashboard(true)"></button></div>
-  <div id="dashStale" class="verdict v-mid" hidden style="margin-bottom:10px"></div>
-  <div id="dashBody"></div>
+<div class="card chatCard">
+  <div class="chatTop"><div class="hint" id="chatCtx"></div><button type="button" class="preset" id="chatClear" onclick="clearChat()"></button></div>
+  <div class="chatLog" id="chatLog" role="log" aria-live="polite"></div>
+  <div class="chatSugs" id="chatSugs"></div>
+  <form class="chatForm" id="chatForm" onsubmit="event.preventDefault(); sendChat();">
+    <textarea id="chatInput" rows="1" maxlength="500" autocomplete="off"></textarea>
+    <button type="submit" id="chatSend" class="chatSend"></button>
+  </form>
+  <div class="hint" id="chatNote"></div>
 </div>
 </section>
 
